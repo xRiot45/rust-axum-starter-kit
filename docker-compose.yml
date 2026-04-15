@@ -1,0 +1,73 @@
+version: "3.9"
+
+services:
+  # ── Application ──────────────────────────────────────────────────────────────
+  app:
+    build: .
+    container_name: axum_app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ENV: development
+      SERVER__PORT: 8080
+      DATABASE__URL: postgres://postgres:password@postgres:5432/myapp_db
+      DATABASE__MAX_CONNECTIONS: 10
+      JWT__SECRET: change_me_in_production_use_long_random_string
+      JWT__ACCESS_TOKEN_EXPIRY_SECS: 900
+      JWT__REFRESH_TOKEN_EXPIRY_SECS: 2592000
+      REDIS__URL: redis://redis:6379
+      RUST_LOG: info,sqlx=warn
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: axum_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: myapp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: axum_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  backend:
+    driver: bridge

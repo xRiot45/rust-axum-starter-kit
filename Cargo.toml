@@ -1,0 +1,79 @@
+[package]
+name = "rust-axum-starter-kit"
+version = "0.1.0"
+edition = "2021"
+authors = ["xRiot45"]
+description = "Production-ready Axum REST API starter kit"
+license = "MIT"
+
+[[bin]]
+name = "rust-axum-starter-kit"
+path = "src/main.rs"
+
+[dependencies]
+# --- Web Framework ---
+axum = { version = "0.7", features = ["macros"] }
+axum-extra = { version = "0.9", features = ["typed-header"] }
+tower = { version = "0.4", features = ["full"] }
+tower-http = { version = "0.5", features = ["cors", "trace", "request-id", "timeout", "compression-full"] }
+
+# --- Async Runtime ---
+tokio = { version = "1", features = ["full"] }
+
+# --- Serialization ---
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- Database (SQLx with PostgreSQL) ---
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "migrate"] }
+
+# --- Validation ---
+validator = { version = "0.18", features = ["derive"] }
+
+# --- Auth / JWT ---
+jsonwebtoken = "9"
+argon2 = "0.5"
+
+# --- Config / Environment ---
+dotenvy = "0.15"
+config = "0.14"
+
+# --- Tracing / Observability ---
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# --- Error Handling ---
+thiserror = "1"
+anyhow = "1"
+
+# --- UUID & Time ---
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# --- HTTP Client (for webhooks / external APIs) ---
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+
+# --- Background Jobs ---
+tokio-cron-scheduler = "0.10"
+
+# --- Redis (caching / sessions) ---
+redis = { version = "0.25", features = ["tokio-comp", "connection-manager"] }
+
+# --- Email ---
+lettre = { version = "0.11", features = ["tokio1", "tokio1-native-tls"], default-features = false }
+
+# --- Async Trait ---
+async-trait = "0.1"
+
+# --- Metrics ---
+axum-prometheus = "0.6"
+
+[dev-dependencies]
+tokio-test = "0.4"
+tower = { version = "0.4", features = ["util"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
