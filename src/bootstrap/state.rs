@@ -1,7 +1,7 @@
-use sqlx::PgPool;
-use redis::aio::ConnectionManager as RedisConn;
 use crate::configs::app_config::AppConfig;
 use crate::configs::jwt::JwtKeys;
+use redis::aio::ConnectionManager as RedisConn;
+use sqlx::PgPool;
 
 /// Shared application state injected into every Axum handler via `State<AppState>`.
 #[derive(Clone)]

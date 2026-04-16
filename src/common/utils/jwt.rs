@@ -1,8 +1,8 @@
+use crate::common::errors::{AppError, AppResult};
+use crate::common::extractors::auth_user::Claims;
 use chrono::Utc;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use uuid::Uuid;
-use crate::common::errors::{AppError, AppResult};
-use crate::common::extractors::auth_user::Claims;
 
 pub fn generate_access_token(
     user_id: Uuid,

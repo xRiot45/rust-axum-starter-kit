@@ -1,6 +1,6 @@
+use crate::common::errors::AppResult;
 use async_trait::async_trait;
 use uuid::Uuid;
-use crate::common::errors::AppResult;
 
 /// Base repository trait for CRUD operations.
 /// Implement this for each domain aggregate root.

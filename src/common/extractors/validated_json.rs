@@ -1,3 +1,4 @@
+use crate::common::errors::{AppError, FieldError};
 use axum::{
     async_trait,
     extract::{rejection::JsonRejection, FromRequest, Request},
@@ -5,7 +6,6 @@ use axum::{
 };
 use serde::de::DeserializeOwned;
 use validator::Validate;
-use crate::common::errors::AppError;
 
 /// Axum extractor that deserializes AND validates the request body.
 /// Uses `validator` crate annotations on the target struct.
@@ -26,20 +26,21 @@ where
             .map_err(|e| AppError::BadRequest(e.to_string()))?;
 
         value.validate().map_err(|e| {
-            let messages: Vec<String> = e
+            let field_errors: Vec<FieldError> = e
                 .field_errors()
                 .iter()
                 .flat_map(|(field, errors)| {
-                    errors.iter().map(move |err| {
-                        format!(
-                            "{}: {}",
-                            field,
-                            err.message.as_ref().map(|m| m.as_ref()).unwrap_or("invalid")
-                        )
+                    errors.iter().map(move |err| FieldError {
+                        field: field.to_string(),
+                        message: err
+                            .message
+                            .as_ref()
+                            .map(|m| m.to_string())
+                            .unwrap_or_else(|| "invalid".to_string()),
                     })
                 })
                 .collect();
-            AppError::ValidationError(messages.join(", "))
+            AppError::ValidationError(field_errors)
         })?;
 
         Ok(ValidatedJson(value))

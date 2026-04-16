@@ -1,3 +1,4 @@
+use crate::common::errors::AppError;
 use axum::{
     async_trait,
     extract::FromRequestParts,
@@ -6,35 +7,33 @@ use axum::{
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use crate::common::errors::AppError;
 
 /// Claims embedded in the JWT access token.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    pub sub: Uuid,       // user id
+    pub sub: Uuid, // user id
     pub email: String,
     pub exp: usize,
     pub iat: usize,
 }
 
 /// Axum extractor that validates the Bearer token and injects the authenticated user.
-pub struct AuthUser(pub Claims);
+pub struct AuthenticatedUser(pub Claims);
 
 #[async_trait]
-impl<S> FromRequestParts<S> for AuthUser
+impl<S> FromRequestParts<S> for AuthenticatedUser
 where
     S: Send + Sync,
 {
     type Rejection = AppError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let token = extract_bearer_token(&parts.headers)
-            .ok_or_else(|| AppError::Unauthorized("Missing or malformed Authorization header".to_string()))?;
+        let token = extract_bearer_token(&parts.headers).ok_or_else(|| {
+            AppError::Unauthorized("Missing or malformed Authorization header".to_string())
+        })?;
 
         // NOTE: In production, inject the secret from AppState instead of env directly.
-        let secret = std::env::var("JWT__SECRET")
-            .unwrap_or_else(|_| "change_me_in_production".to_string());
-
+        let secret = std::env::var("JWT__SECRET").unwrap_or_else(|_| "secret".to_string());
         let token_data = decode::<Claims>(
             &token,
             &DecodingKey::from_secret(secret.as_bytes()),
@@ -42,7 +41,7 @@ where
         )
         .map_err(|e| AppError::Unauthorized(format!("Invalid token: {e}")))?;
 
-        Ok(AuthUser(token_data.claims))
+        Ok(AuthenticatedUser(token_data.claims))
     }
 }
 

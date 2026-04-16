@@ -1,5 +1,5 @@
-use tower_http::request_id::{MakeRequestId, RequestId};
 use axum::http::HeaderValue;
+use tower_http::request_id::{MakeRequestId, RequestId};
 use uuid::Uuid;
 
 /// Generates a unique UUID v4 per request and attaches it as `x-request-id`.

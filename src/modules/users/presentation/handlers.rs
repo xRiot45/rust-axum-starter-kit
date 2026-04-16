@@ -12,15 +12,26 @@ use crate::common::utils::pagination::PaginationQuery;
 use crate::modules::users::application::dto::{CreateUserRequest, UpdateUserRequest};
 
 /// POST /api/v1/users
-pub async fn create_user(ValidatedJson(body): ValidatedJson<CreateUserRequest>) -> impl IntoResponse {
+pub async fn create_user(
+    ValidatedJson(body): ValidatedJson<CreateUserRequest>,
+) -> impl IntoResponse {
     tracing::info!(email = %body.email, "Creating user (stub)");
-    (StatusCode::CREATED, Json(json!({ "message": "User created (stub)", "email": body.email })))
+    (
+        StatusCode::CREATED,
+        Json(json!({ "message": "User created (stub)", "email": body.email })),
+    )
 }
 
 /// GET /api/v1/users
 pub async fn list_users(Query(pagination): Query<PaginationQuery>) -> impl IntoResponse {
-    tracing::info!(page = pagination.page, per_page = pagination.per_page, "Listing users (stub)");
-    Json(json!({ "data": [], "meta": { "page": pagination.page, "per_page": pagination.per_page, "total": 0 } }))
+    tracing::info!(
+        page = pagination.page,
+        limit = pagination.limit,
+        "Listing users (stub)"
+    );
+    Json(
+        json!({ "data": [], "meta": { "page": pagination.page, "limit": pagination.limit, "total": 0 } }),
+    )
 }
 
 /// GET /api/v1/users/:id
