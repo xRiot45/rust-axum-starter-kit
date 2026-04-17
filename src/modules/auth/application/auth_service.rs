@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use chrono::Utc;
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::common::errors::{AppError, AppResult};
@@ -21,29 +21,39 @@ impl AuthService {
         auth_repo: Arc<dyn AuthRepository>,
         jwt: JwtKeys,
     ) -> Self {
-        Self { user_repo, auth_repo, jwt }
+        Self {
+            user_repo,
+            auth_repo,
+            jwt,
+        }
     }
 
     pub async fn login(&self, req: LoginRequest) -> AppResult<AuthResponse> {
-        let user = self.user_repo
+        let user = self
+            .user_repo
             .find_by_email(&req.email)
             .await?
             .ok_or_else(|| AppError::Unauthorized("Invalid email or password".to_string()))?;
 
         if !verify_password(&req.password, &user.password_hash)? {
-            return Err(AppError::Unauthorized("Invalid email or password".to_string()));
+            return Err(AppError::Unauthorized(
+                "Invalid email or password".to_string(),
+            ));
         }
 
         let access_token = generate_access_token(
             user.id,
             &user.email,
-            &self.jwt.secret,
+            &self.jwt.access_secret,
             self.jwt.access_expiry_secs,
         )?;
 
         let refresh_token = Uuid::new_v4().to_string();
-        let expires_at = Utc::now() + chrono::Duration::seconds(self.jwt.refresh_expiry_secs as i64);
-        self.auth_repo.store_refresh_token(user.id, &refresh_token, expires_at).await?;
+        let expires_at =
+            Utc::now() + chrono::Duration::seconds(self.jwt.refresh_expiry_secs as i64);
+        self.auth_repo
+            .store_refresh_token(user.id, &refresh_token, expires_at)
+            .await?;
 
         Ok(AuthResponse {
             access_token,
@@ -54,7 +64,8 @@ impl AuthService {
     }
 
     pub async fn refresh(&self, req: RefreshRequest) -> AppResult<AuthResponse> {
-        let stored = self.auth_repo
+        let stored = self
+            .auth_repo
             .find_refresh_token(&req.refresh_token)
             .await?
             .ok_or_else(|| AppError::Unauthorized("Invalid refresh token".to_string()))?;
@@ -63,9 +74,12 @@ impl AuthService {
             return Err(AppError::Unauthorized("Refresh token expired".to_string()));
         }
 
-        self.auth_repo.revoke_refresh_token(&req.refresh_token).await?;
+        self.auth_repo
+            .revoke_refresh_token(&req.refresh_token)
+            .await?;
 
-        let user = self.user_repo
+        let user = self
+            .user_repo
             .find_by_id(stored.user_id)
             .await?
             .ok_or_else(|| AppError::NotFound("User not found".to_string()))?;
@@ -73,13 +87,16 @@ impl AuthService {
         let access_token = generate_access_token(
             user.id,
             &user.email,
-            &self.jwt.secret,
+            &self.jwt.refresh_secret,
             self.jwt.access_expiry_secs,
         )?;
 
         let new_refresh = Uuid::new_v4().to_string();
-        let expires_at = Utc::now() + chrono::Duration::seconds(self.jwt.refresh_expiry_secs as i64);
-        self.auth_repo.store_refresh_token(user.id, &new_refresh, expires_at).await?;
+        let expires_at =
+            Utc::now() + chrono::Duration::seconds(self.jwt.refresh_expiry_secs as i64);
+        self.auth_repo
+            .store_refresh_token(user.id, &new_refresh, expires_at)
+            .await?;
 
         Ok(AuthResponse {
             access_token,
