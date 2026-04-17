@@ -7,8 +7,7 @@ use axum::{
 use serde_json::json;
 use uuid::Uuid;
 
-use crate::common::extractors::ValidatedJson;
-use crate::common::utils::pagination::PaginationQuery;
+use crate::common::{extractors::ValidatedJson, responses::api_response::PaginationQuery};
 use crate::modules::users::application::dto::{CreateUserRequest, UpdateUserRequest};
 
 /// POST /api/v1/users
